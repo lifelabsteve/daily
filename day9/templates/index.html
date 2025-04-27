@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Scraper</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        .job-card {
+            margin-bottom: 1rem;
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .job-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .source-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: var(--card-background-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1 class="text-center">Job Scraper</h1>
+        <div class="search-container">
+            <div class="grid">
+                <input type="text" id="searchInput" placeholder="Search for jobs (e.g., python, javascript, java)">
+                <button onclick="searchJobs()">Search</button>
+            </div>
+        </div>
+        <div id="results" class="results-container">
+            <!-- Results will be displayed here -->
+        </div>
+    </main>
+
+    <script>
+        function searchJobs() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            if (!searchTerm) return;
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<article class="text-center"><p>Loading...</p></article>';
+
+            fetch(`/search?q=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(jobs => {
+                    resultsDiv.innerHTML = '';
+                    if (jobs.length === 0) {
+                        resultsDiv.innerHTML = '<article class="text-center"><p>No jobs found</p></article>';
+                        return;
+                    }
+
+                    jobs.forEach(job => {
+                        const jobCard = document.createElement('article');
+                        jobCard.className = 'job-card';
+                        jobCard.innerHTML = `
+                            <span class="source-badge">${job.source}</span>
+                            <header>
+                                <h3>${job.title}</h3>
+                                <p><small>${job.company}</small></p>
+                            </header>
+                            <p>${job.description}</p>
+                            <footer>
+                                <a href="${job.link}" target="_blank" role="button">View Job</a>
+                            </footer>
+                        `;
+                        resultsDiv.appendChild(jobCard);
+                    });
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = '<article class="text-center"><p>Error occurred while fetching jobs</p></article>';
+                    console.error('Error:', error);
+                });
+        }
+
+        // Add event listener for Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchJobs();
+            }
+        });
+    </script>
+</body>
+</html> 
